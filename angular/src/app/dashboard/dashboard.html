@@ -1,0 +1,169 @@
+<div class="container py-5">
+  <div class="card shadow-sm border-0 rounded-4 p-4 p-md-5">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+      <h1 class="h3 mb-0">Dashboard</h1>
+      <div class="d-flex gap-2">
+        <button class="btn btn-primary" type="button" (click)="openAddStudentForm()">Add Student</button>
+        <a routerLink="/" class="btn btn-outline-primary">Back to Home</a>
+      </div>
+    </div>
+
+    <div *ngIf="apiMessage" class="alert mb-4" [class.alert-danger]="apiError" [class.alert-success]="!apiError">
+      {{ apiMessage }}
+    </div>
+
+    <div *ngIf="isLoading" class="text-secondary mb-4">Loading students...</div>
+
+    <form *ngIf="showForm" #studentForm="ngForm" (ngSubmit)="saveStudent()" class="border rounded-3 p-3 p-md-4 mb-4 bg-light-subtle">
+      <h2 class="h5 mb-3">{{ isEditing ? 'Edit Student' : 'Add Student' }}</h2>
+
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label">Name</label>
+          <input
+            type="text"
+            class="form-control"
+            name="name"
+            #nameModel="ngModel"
+            required
+            minlength="2"
+            [(ngModel)]="formStudent.name"
+            placeholder="Enter student name"
+            [class.is-invalid]="(submitAttempted || nameModel.touched) && nameModel.invalid"
+          />
+          <div class="text-danger small mt-1" *ngIf="(submitAttempted || nameModel.touched) && nameModel.errors?.['required']">
+            Name is required.
+          </div>
+          <div class="text-danger small mt-1" *ngIf="(submitAttempted || nameModel.touched) && nameModel.errors?.['minlength']">
+            Name must be at least 2 characters.
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Email</label>
+          <input
+            type="email"
+            class="form-control"
+            name="email"
+            #emailModel="ngModel"
+            required
+            [(ngModel)]="formStudent.email"
+            placeholder="Enter student email"
+            [class.is-invalid]="(submitAttempted || emailModel.touched) && emailModel.invalid"
+          />
+          <div class="text-danger small mt-1" *ngIf="(submitAttempted || emailModel.touched) && emailModel.errors?.['required']">
+            Email is required.
+          </div>
+          <div class="text-danger small mt-1" *ngIf="(submitAttempted || emailModel.touched) && emailModel.errors?.['email']">
+            Enter a valid email address.
+          </div>
+        </div>
+
+        <div class="col-md-2">
+          <label class="form-label">Course</label>
+          <input
+            type="text"
+            class="form-control"
+            name="course"
+            #courseModel="ngModel"
+            required
+            minlength="2"
+            [(ngModel)]="formStudent.course"
+            placeholder="Enter course name"
+            [class.is-invalid]="(submitAttempted || courseModel.touched) && courseModel.invalid"
+          />
+          <div class="text-danger small mt-1" *ngIf="(submitAttempted || courseModel.touched) && courseModel.errors?.['required']">
+            Course is required.
+          </div>
+          <div class="text-danger small mt-1" *ngIf="(submitAttempted || courseModel.touched) && courseModel.errors?.['minlength']">
+            Course must be at least 2 characters.
+          </div>
+        </div>
+
+        <div class="col-md-2">
+          <label class="form-label">Department</label>
+          <select
+            class="form-select"
+            name="department"
+            #departmentModel="ngModel"
+            required
+            [(ngModel)]="formStudent.department"
+            [class.is-invalid]="(submitAttempted || departmentModel.touched) && departmentModel.invalid"
+          >
+            <option *ngFor="let department of departments" [ngValue]="department">{{ department }}</option>
+          </select>
+          <div class="text-danger small mt-1" *ngIf="(submitAttempted || departmentModel.touched) && departmentModel.errors?.['required']">
+            Department is required.
+          </div>
+        </div>
+
+        <div class="col-md-2">
+          <label class="form-label">Marks</label>
+          <input
+            type="number"
+            class="form-control"
+            name="marks"
+            #marksModel="ngModel"
+            required
+            min="0"
+            max="100"
+            [(ngModel)]="formStudent.marks"
+            placeholder="0-100"
+            [class.is-invalid]="(submitAttempted || marksModel.touched) && marksModel.invalid"
+          />
+          <div class="text-danger small mt-1" *ngIf="(submitAttempted || marksModel.touched) && marksModel.errors?.['required']">
+            Marks are required.
+          </div>
+          <div class="text-danger small mt-1" *ngIf="(submitAttempted || marksModel.touched) && (marksModel.errors?.['min'] || marksModel.errors?.['max'])">
+            Marks must be between 0 and 100.
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2 mt-3">
+        <button class="btn btn-success" type="submit" [disabled]="studentForm.invalid || isSaving">
+          {{ isEditing ? 'Update Student' : 'Save Student' }}
+        </button>
+        <button class="btn btn-outline-secondary" type="button" (click)="cancelForm()">Cancel</button>
+      </div>
+    </form>
+
+    <div class="table-responsive" *ngIf="students.length > 0; else emptyState">
+      <table class="table table-striped table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Name</th>
+            <th scope="col">Email</th>
+            <th scope="col">Course</th>
+            <th scope="col">Department</th>
+            <th scope="col">Marks</th>
+            <th scope="col" class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let student of students">
+            <td>{{ student.id }}</td>
+            <td>{{ student.name }}</td>
+            <td>{{ student.email }}</td>
+            <td>{{ student.course }}</td>
+            <td>{{ student.department }}</td>
+            <td>{{ student.marks }}</td>
+            <td class="text-end">
+              <div class="d-inline-flex gap-2">
+                <button class="btn btn-sm btn-outline-primary" type="button" (click)="editStudent(student)">Edit</button>
+                <button class="btn btn-sm btn-outline-danger" type="button" (click)="deleteStudent(student.id)">Delete</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <ng-template #emptyState>
+      <div class="text-center py-5 border rounded-3">
+        <p class="text-secondary mb-0">No students added yet. Click "Add Student" to create one.</p>
+      </div>
+    </ng-template>
+  </div>
+</div>

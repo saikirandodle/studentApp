@@ -1,0 +1,61 @@
+<div class="container min-vh-100 d-flex align-items-center justify-content-center py-5">
+	<div class="card shadow-sm border-0 rounded-4 p-4 p-md-5 w-100" style="max-width: 520px;">
+		<h2 class="h3 mb-4 text-center">Login</h2>
+
+		<form (ngSubmit)="login()" #loginForm="ngForm" class="d-grid gap-3">
+			<div>
+				<label class="form-label">Email</label>
+				<input
+					type="email"
+					class="form-control form-control-lg"
+					name="email"
+					#emailModel="ngModel"
+					required
+					[(ngModel)]="user.email"
+					placeholder="Enter your email"
+					[class.is-invalid]="(submitAttempted || emailModel.touched) && emailModel.invalid"
+				/>
+				<div class="text-danger small mt-1" *ngIf="(submitAttempted || emailModel.touched) && emailModel.errors?.['required']">
+					Email is required.
+				</div>
+				<div class="text-danger small mt-1" *ngIf="(submitAttempted || emailModel.touched) && emailModel.errors?.['email']">
+					Enter a valid email address.
+				</div>
+			</div>
+
+			<div>
+				<label class="form-label">Password</label>
+				<input
+					type="password"
+					class="form-control form-control-lg"
+					name="password"
+					#passwordModel="ngModel"
+					required
+					minlength="6"
+					[(ngModel)]="user.password"
+					placeholder="Enter your password"
+					[class.is-invalid]="(submitAttempted || passwordModel.touched) && passwordModel.invalid"
+				/>
+				<div class="text-danger small mt-1" *ngIf="(submitAttempted || passwordModel.touched) && passwordModel.errors?.['required']">
+					Password is required.
+				</div>
+				<div class="text-danger small mt-1" *ngIf="(submitAttempted || passwordModel.touched) && passwordModel.errors?.['minlength']">
+					Password must be at least 6 characters.
+				</div>
+			</div>
+
+			<button class="btn btn-primary btn-lg" type="submit" [disabled]="loginForm.invalid || isSubmitting">
+				{{ isSubmitting ? 'Logging in...' : 'Login' }}
+			</button>
+		</form>
+
+		<div *ngIf="message" class="alert mt-3 mb-0" [class.alert-danger]="isError" [class.alert-success]="!isError">
+			{{ message }}
+		</div>
+
+		<p class="text-center mt-4 mb-0">
+			Don’t have an account?
+			<a routerLink="/register">Register</a>
+		</p>
+	</div>
+</div>
