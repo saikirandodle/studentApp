@@ -55,9 +55,9 @@ export class RegisterComponent {
       error: (error) => {
         const backendMessage = this.extractMessage(error?.error);
 
-        if (error?.status === 200 || backendMessage === 'User Registered Successfully') {
-          this.message = backendMessage || 'User Registered Successfully';
-          this.isError = false;
+        if (error?.status === 200 || backendMessage === 'Email already registered') {
+          this.message = backendMessage || 'Email already registered';
+          this.isError = true;
           this.resetRegistrationForm(registerForm);
           return;
         }
