@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, NgZone } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { StudentPayload, StudentService } from '../student.service';
+import { StudentPayload, StudentService, UploadStudentsResponse } from '../student.service';
 
 interface Student {
   id: string;
@@ -21,6 +21,7 @@ interface Student {
   styleUrl: './dashboard.css'
 })
 export class DashboardComponent {
+  activeTab: 'manage' | 'upload' = 'manage';
   students: Student[] = [];
   showForm = false;
   isEditing = false;
@@ -37,6 +38,12 @@ export class DashboardComponent {
   currentPage = 1;
   pageSize = 5;
   readonly pageSizeOptions = [5, 10, 25];
+  selectedUploadFile: File | null = null;
+  uploadInProgress = false;
+  uploadMessage = '';
+  uploadError = false;
+  uploadSummary: UploadStudentsResponse | null = null;
+  private uploadMessageTimer: ReturnType<typeof setTimeout> | null = null;
 
   formStudent = {
     id: '',
@@ -83,6 +90,7 @@ export class DashboardComponent {
   }
 
   openAddStudentForm() {
+    this.activeTab = 'manage';
     this.isEditing = false;
     this.showForm = true;
     this.submitAttempted = false;
@@ -242,6 +250,78 @@ export class DashboardComponent {
     this.isSaving = false;
     this.submitAttempted = false;
     this.formStudent = { id: '', name: '', email: '', course: '', department: 'CSE', marks: null };
+  }
+
+  setActiveTab(tab: 'manage' | 'upload') {
+    this.activeTab = tab;
+  }
+
+  onUploadFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files && input.files.length > 0 ? input.files[0] : null;
+
+    this.selectedUploadFile = file;
+    this.dismissUploadMessage();
+    this.uploadSummary = null;
+  }
+
+  uploadStudents() {
+    if (!this.selectedUploadFile || this.uploadInProgress) {
+      return;
+    }
+
+    const fileName = this.selectedUploadFile.name.toLowerCase();
+    if (!fileName.endsWith('.csv') && !fileName.endsWith('.xlsx')) {
+      this.showUploadMessage('Please select a .csv or .xlsx file.', true);
+      return;
+    }
+
+    this.uploadInProgress = true;
+    this.dismissUploadMessage();
+    this.uploadSummary = null;
+
+    this.studentService.uploadStudentsFile(this.selectedUploadFile).subscribe({
+      next: (response) => {
+        this.uploadSummary = response;
+        this.showUploadMessage(
+          response?.message ||
+            `Upload completed. Inserted ${response?.insertedCount ?? 0} students, skipped ${response?.skippedCount ?? 0}.`,
+          false,
+          2000
+        );
+        this.uploadInProgress = false;
+        this.loadStudents();
+      },
+      error: (error) => {
+        this.showUploadMessage(error?.error?.message || 'Failed to upload students file.', true);
+        this.uploadSummary = error?.error || null;
+        this.uploadInProgress = false;
+      }
+    });
+  }
+
+  dismissUploadMessage() {
+    if (this.uploadMessageTimer) {
+      clearTimeout(this.uploadMessageTimer);
+      this.uploadMessageTimer = null;
+    }
+
+    this.uploadMessage = '';
+    this.uploadError = false;
+  }
+
+  private showUploadMessage(message: string, isError: boolean, autoHideMs = 0) {
+    this.dismissUploadMessage();
+    this.uploadMessage = message;
+    this.uploadError = isError;
+
+    if (autoHideMs > 0) {
+      this.uploadMessageTimer = setTimeout(() => {
+        this.uploadMessage = '';
+        this.uploadError = false;
+        this.uploadMessageTimer = null;
+      }, autoHideMs);
+    }
   }
 
   get filteredStudents(): Student[] {

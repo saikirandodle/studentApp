@@ -23,3 +23,19 @@ td {
   line-height: 1;
   color: #6c757d;
 }
+
+.tab-switcher {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.upload-panel code {
+  font-size: 0.9rem;
+}
+
+.upload-summary {
+  border-top: 1px solid #dee2e6;
+  padding-top: 0.75rem;
+  color: #495057;
+}

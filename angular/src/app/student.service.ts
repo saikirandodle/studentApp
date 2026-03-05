@@ -9,6 +9,13 @@ export interface StudentPayload {
   marks: number;
 }
 
+export interface UploadStudentsResponse {
+  message: string;
+  insertedCount: number;
+  skippedCount: number;
+  invalidRows?: Array<{ row: number; errors: string[] }>;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -40,5 +47,13 @@ export class StudentService {
 
   deleteStudent(id: string) {
     return this.http.delete<any>(`${this.apiBaseUrl}/${id}`, { withCredentials: true });
+  }
+
+  uploadStudentsFile(file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<UploadStudentsResponse>(`${this.apiBaseUrl}/upload`, formData, {
+      withCredentials: true
+    });
   }
 }
