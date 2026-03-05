@@ -46,7 +46,8 @@ The project demonstrates complete frontend-backend integration using REST APIs.
 - View Students
 - Update Student Details
 - Delete Student
-
+- Search and filter functionality
+- Pagination
 ---
 
 ## 🔄 Application Flow
@@ -74,10 +75,6 @@ The project demonstrates complete frontend-backend integration using REST APIs.
 ## 📌 Future Enhancements
 
 - Role-based access control
-- Search and filter functionality
-- Pagination
-- Cloud deployment (AWS / Render / Vercel)
-
 ---
 
 ## 👨‍💻 Developed Using
