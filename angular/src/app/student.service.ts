@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
 export interface StudentPayload {
@@ -18,7 +18,16 @@ export class StudentService {
   constructor(private http: HttpClient) {}
 
   getStudents() {
-    return this.http.get<any>(this.apiBaseUrl, { withCredentials: true });
+    const params = new HttpParams().set('_ts', Date.now().toString());
+
+    return this.http.get<any>(this.apiBaseUrl, {
+      withCredentials: true,
+      params,
+      headers: {
+        'Cache-Control': 'no-cache',
+        Pragma: 'no-cache'
+      }
+    });
   }
 
   createStudent(data: StudentPayload) {

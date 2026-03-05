@@ -30,6 +30,13 @@ export class DashboardComponent {
   apiError = false;
   submitAttempted = false;
   departments: Array<'CSE' | 'IT' | 'ECE'> = ['CSE', 'IT', 'ECE'];
+  searchTerm = '';
+  departmentFilter: 'ALL' | 'CSE' | 'IT' | 'ECE' = 'ALL';
+  sortColumn: keyof Student = 'name';
+  sortDirection: 'asc' | 'desc' = 'asc';
+  currentPage = 1;
+  pageSize = 5;
+  readonly pageSizeOptions = [5, 10, 25];
 
   formStudent = {
     id: '',
@@ -59,6 +66,7 @@ export class DashboardComponent {
         this.zone.run(() => {
           this.students = payload.map((student: any) => this.mapApiStudent(student));
           this.students = [...this.students];
+          this.ensureValidCurrentPage();
           this.isLoading = false;
           this.cdr.detectChanges();
         });
@@ -154,6 +162,7 @@ export class DashboardComponent {
             : ({ id: `temp-${Date.now()}`, ...payload } as Student);
 
           this.students = [...this.students, createdStudent];
+          this.ensureValidCurrentPage();
           this.apiMessage = 'Student added successfully.';
           this.cancelForm();
           this.loadStudents();
@@ -197,6 +206,7 @@ export class DashboardComponent {
     this.studentService.deleteStudent(id).subscribe({
       next: () => {
         this.students = this.students.filter((student) => student.id !== id);
+        this.ensureValidCurrentPage();
         this.apiMessage = 'Student deleted successfully.';
 
         if (this.isEditing && this.formStudent.id === id) {
@@ -208,6 +218,7 @@ export class DashboardComponent {
       error: (error) => {
         if (error?.status === 200) {
           this.students = this.students.filter((student) => student.id !== id);
+          this.ensureValidCurrentPage();
           this.apiMessage = 'Student deleted successfully.';
 
           if (this.isEditing && this.formStudent.id === id) {
@@ -231,6 +242,134 @@ export class DashboardComponent {
     this.isSaving = false;
     this.submitAttempted = false;
     this.formStudent = { id: '', name: '', email: '', course: '', department: 'CSE', marks: null };
+  }
+
+  get filteredStudents(): Student[] {
+    const normalizedSearch = this.searchTerm.trim().toLowerCase();
+
+    return this.students.filter((student) => {
+      const matchesDepartment =
+        this.departmentFilter === 'ALL' || student.department === this.departmentFilter;
+
+      if (!matchesDepartment) {
+        return false;
+      }
+
+      if (!normalizedSearch) {
+        return true;
+      }
+
+      return (
+        student.name.toLowerCase().includes(normalizedSearch) ||
+        student.email.toLowerCase().includes(normalizedSearch) ||
+        student.course.toLowerCase().includes(normalizedSearch) ||
+        student.department.toLowerCase().includes(normalizedSearch) ||
+        String(student.marks).includes(normalizedSearch)
+      );
+    });
+  }
+
+  get sortedStudents(): Student[] {
+    const sorted = [...this.filteredStudents];
+    const directionFactor = this.sortDirection === 'asc' ? 1 : -1;
+
+    sorted.sort((left, right) => {
+      const leftValue = left[this.sortColumn];
+      const rightValue = right[this.sortColumn];
+
+      if (typeof leftValue === 'number' && typeof rightValue === 'number') {
+        return (leftValue - rightValue) * directionFactor;
+      }
+
+      const leftText = String(leftValue).toLowerCase();
+      const rightText = String(rightValue).toLowerCase();
+      return leftText.localeCompare(rightText) * directionFactor;
+    });
+
+    return sorted;
+  }
+
+  get paginatedStudents(): Student[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.sortedStudents.slice(start, start + this.pageSize);
+  }
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.sortedStudents.length / this.pageSize));
+  }
+
+  get pageStartRecord(): number {
+    if (this.sortedStudents.length === 0) {
+      return 0;
+    }
+
+    return (this.currentPage - 1) * this.pageSize + 1;
+  }
+
+  get pageEndRecord(): number {
+    return Math.min(this.currentPage * this.pageSize, this.sortedStudents.length);
+  }
+
+  onFiltersChanged() {
+    this.currentPage = 1;
+    this.ensureValidCurrentPage();
+  }
+
+  toggleSort(column: keyof Student) {
+    if (this.sortColumn === column) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortColumn = column;
+      this.sortDirection = 'asc';
+    }
+
+    this.currentPage = 1;
+  }
+
+  setPage(page: number) {
+    if (page < 1 || page > this.totalPages) {
+      return;
+    }
+
+    this.currentPage = page;
+  }
+
+  onPageSizeChange(size: number | string) {
+    const numericSize = Number(size);
+    if (!this.pageSizeOptions.includes(numericSize)) {
+      return;
+    }
+
+    this.pageSize = numericSize;
+    this.currentPage = 1;
+    this.ensureValidCurrentPage();
+  }
+
+  getSortLabel(column: keyof Student): string {
+    if (this.sortColumn !== column) {
+      return 'Not sorted';
+    }
+
+    return this.sortDirection === 'asc' ? 'Ascending' : 'Descending';
+  }
+
+  getSortIcon(column: keyof Student): string {
+    if (this.sortColumn !== column) {
+      return '↕';
+    }
+
+    return this.sortDirection === 'asc' ? '↑' : '↓';
+  }
+
+  private ensureValidCurrentPage() {
+    const maxPage = this.totalPages;
+    if (this.currentPage > maxPage) {
+      this.currentPage = maxPage;
+    }
+
+    if (this.currentPage < 1) {
+      this.currentPage = 1;
+    }
   }
 
   private mapApiStudent(student: any): Student {

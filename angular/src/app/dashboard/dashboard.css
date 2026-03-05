@@ -6,3 +6,20 @@ th,
 td {
   vertical-align: middle;
 }
+
+.sort-trigger {
+  text-decoration: none;
+  font-weight: 600;
+  color: inherit;
+}
+
+.sort-trigger:hover {
+  text-decoration: none;
+}
+
+.sort-label {
+  margin-left: 0.35rem;
+  font-size: 0.9rem;
+  line-height: 1;
+  color: #6c757d;
+}
